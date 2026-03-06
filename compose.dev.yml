@@ -1,6 +1,7 @@
 services:
 
   wordpress:
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     volumes:
       - ./src/wp-content/plugins:/var/www/html/wp-content/plugins
       - ./src/wp-content/themes:/var/www/html/wp-content/themes
