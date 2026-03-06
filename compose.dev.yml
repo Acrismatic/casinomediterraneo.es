@@ -1,0 +1,23 @@
+services:
+
+  wordpress:
+    volumes:
+      - ./src/wp-content/plugins:/var/www/html/wp-content/plugins
+      - ./src/wp-content/themes:/var/www/html/wp-content/themes
+      - ./src/wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
+      - ./src/wp-content/uploads:/var/www/html/wp-content/uploads
+
+  nginx:
+    volumes:
+      - ./src/wp-content/plugins:/var/www/html/wp-content/plugins:ro
+      - ./src/wp-content/themes:/var/www/html/wp-content/themes:ro
+      - ./src/wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+      - ./src/wp-content/uploads:/var/www/html/wp-content/uploads:ro
+      - ./docker/nginx/dev.conf:/etc/nginx/conf.d/default.conf:ro
+
+  phpmyadmin:
+    image: phpmyadmin
+    ports:
+      - "${PMA_PORT}:80"
+    environment:
+      PMA_HOST: db
