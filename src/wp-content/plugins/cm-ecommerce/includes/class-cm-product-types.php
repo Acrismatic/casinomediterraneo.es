@@ -9,8 +9,11 @@ class CM_Product_Types {
 		add_filter( 'product_type_selector', array( __CLASS__, 'add_product_types' ) );
 		add_filter( 'woocommerce_product_class', array( __CLASS__, 'map_product_classes' ), 10, 2 );
 		add_filter( 'woocommerce_product_data_tabs', array( __CLASS__, 'register_torneo_info_tab' ) );
+		add_filter( 'woocommerce_product_data_tabs', array( __CLASS__, 'register_evento_info_tab' ) );
 		add_filter( 'woocommerce_product_data_tabs', array( __CLASS__, 'extend_simple_tabs_for_torneo' ), 20 );
+		add_filter( 'woocommerce_product_data_tabs', array( __CLASS__, 'extend_simple_tabs_for_evento' ), 20 );
 		add_filter( 'product_type_options', array( __CLASS__, 'extend_simple_options_for_torneo' ) );
+		add_filter( 'product_type_options', array( __CLASS__, 'extend_simple_options_for_evento' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_admin_assets' ) );
 	}
 
@@ -44,6 +47,17 @@ class CM_Product_Types {
 		return $tabs;
 	}
 
+	public static function register_evento_info_tab( $tabs ) {
+		$tabs['evento_info'] = array(
+			'label'    => __( 'Información evento', 'cm-wc-extensions' ),
+			'target'   => 'evento_info_product_data',
+			'class'    => array( 'show_if_evento' ),
+			'priority' => 71,
+		);
+
+		return $tabs;
+	}
+
 	public static function extend_simple_tabs_for_torneo( $tabs ) {
 		foreach ( $tabs as $key => $tab ) {
 			if ( empty( $tab['class'] ) || ! is_array( $tab['class'] ) ) {
@@ -58,6 +72,20 @@ class CM_Product_Types {
 		return $tabs;
 	}
 
+	public static function extend_simple_tabs_for_evento( $tabs ) {
+		foreach ( $tabs as $key => $tab ) {
+			if ( empty( $tab['class'] ) || ! is_array( $tab['class'] ) ) {
+				continue;
+			}
+
+			if ( in_array( 'show_if_simple', $tab['class'], true ) && ! in_array( 'show_if_evento', $tab['class'], true ) ) {
+				$tabs[ $key ]['class'][] = 'show_if_evento';
+			}
+		}
+
+		return $tabs;
+	}
+
 	public static function extend_simple_options_for_torneo( $options ) {
 		foreach ( $options as $key => $option ) {
 			if ( empty( $option['wrapper_class'] ) || ! is_string( $option['wrapper_class'] ) ) {
@@ -66,6 +94,20 @@ class CM_Product_Types {
 
 			if ( false !== strpos( $option['wrapper_class'], 'show_if_simple' ) && false === strpos( $option['wrapper_class'], 'show_if_torneo-poker' ) ) {
 				$options[ $key ]['wrapper_class'] .= ' show_if_torneo-poker';
+			}
+		}
+
+		return $options;
+	}
+
+	public static function extend_simple_options_for_evento( $options ) {
+		foreach ( $options as $key => $option ) {
+			if ( empty( $option['wrapper_class'] ) || ! is_string( $option['wrapper_class'] ) ) {
+				continue;
+			}
+
+			if ( false !== strpos( $option['wrapper_class'], 'show_if_simple' ) && false === strpos( $option['wrapper_class'], 'show_if_evento' ) ) {
+				$options[ $key ]['wrapper_class'] .= ' show_if_evento';
 			}
 		}
 
