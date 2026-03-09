@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "woocommerce-backend-dev": {
+      "source": "woocommerce/woocommerce",
+      "sourceType": "github",
+      "computedHash": "e5e63ec34c015e10820f92cb723f79af99b9c9907d28e054990a2bdc04f54dee"
+    }
+  }
+}
