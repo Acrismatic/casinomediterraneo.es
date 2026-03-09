@@ -153,6 +153,16 @@ class CM_Product_Types {
 				'nonce'   => wp_create_nonce( 'cm_search_torneos' ),
 			)
 		);
+
+		wp_localize_script(
+			'cm-wc-product-type',
+			'cmEventoSearch',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'action'  => 'cm_search_eventos',
+				'nonce'   => wp_create_nonce( 'cm_search_eventos' ),
+			)
+		);
 	}
 }
 
