@@ -47,7 +47,7 @@ jQuery(function($) {
 		$select.data('cmTorneoReady', true);
 	}
 
-	function inheritSimpleVisibilityForCustomTypes() {
+	function inheritSimpleVisibilityForTorneo() {
 		$('.show_if_simple').each(function() {
 			var $el = $(this);
 
@@ -57,25 +57,27 @@ jQuery(function($) {
 		});
 	}
 
-	function toggleTorneoTypeTabs() {
+	function toggleTorneoTab() {
 		var selectedType = $('#product-type').val();
-
-		$('.torneo_info_options').hide();
-		$('#torneo_info_product_data').hide();
+		var $tab = $('.torneo_info_options');
+		var $panel = $('#torneo_info_product_data');
 
 		if (selectedType === 'torneo-poker') {
-			$('.torneo_info_options').show();
-			$('#torneo_info_product_data').show();
+			$tab.show();
+			$panel.show();
+		} else {
+			$tab.hide();
+			$panel.hide();
 		}
 	}
 
-	$(document.body).on('woocommerce-product-type-change', toggleTorneoTypeTabs);
-	$('#product-type').on('change', toggleTorneoTypeTabs);
+	$(document.body).on('woocommerce-product-type-change', toggleTorneoTab);
+	$('#product-type').on('change', toggleTorneoTab);
 
 	setTimeout(function() {
-		inheritSimpleVisibilityForCustomTypes();
+		inheritSimpleVisibilityForTorneo();
 		initTorneoSelect();
-		toggleTorneoTypeTabs();
+		toggleTorneoTab();
 		$(document.body).trigger('woocommerce-product-type-change');
 	}, 0);
 
