@@ -80,9 +80,9 @@ function cm_enqueue_admin_evento_script($hook)
 
 	wp_enqueue_script(
 		'cm-admin-evento-script',
-		plugin_dir_url(__FILE__) . 'cm-event-type.js',
-		array('jquery', 'selectWoo'),
-		'1.0',
+		CM_WC_EXT_URL . 'assets/js/cm-event-type.js',
+		array('jquery', 'wc-enhanced-select'),
+		CM_WC_EXT_VERSION,
 		true
 	);
 
