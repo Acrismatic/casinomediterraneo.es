@@ -44,6 +44,5 @@ class CM_Torneo_Save {
 			}
 		}
 
-		delete_post_meta( $product_id, 'product_evento' );
 	}
 }
