@@ -8,6 +8,7 @@
 
 logs/
 tmp/
+docker/wordpress/wordpress-stubs.php
 
 src/wp-content/uploads/*
 !src/wp-content/uploads/.gitkeep
