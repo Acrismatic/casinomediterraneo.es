@@ -30,13 +30,9 @@ class CM_Evento_Save {
 			return;
 		}
 
-		$evento_id   = absint( wp_unslash( $_POST['_cm_evento_id'] ) );
-		$evento_type = '';
-		if ( $evento_id > 0 && 'product' === get_post_type( $evento_id ) ) {
-			$evento_type = WC_Product_Factory::get_product_type( $evento_id );
-		}
+		$evento_id = absint( wp_unslash( $_POST['_cm_evento_id'] ) );
 
-		if ( $evento_id > 0 && $evento_id !== $product_id && 'evento' === $evento_type ) {
+		if ( $evento_id > 0 && $evento_id !== $product_id && 'casino_evento' === get_post_type( $evento_id ) ) {
 			update_post_meta( $product_id, '_cm_evento_id', $evento_id );
 			update_post_meta( $evento_id, 'evento_producto_id', $product_id );
 
@@ -51,6 +47,96 @@ class CM_Evento_Save {
 		if ( $previous_evento_id > 0 ) {
 			delete_post_meta( $previous_evento_id, 'evento_producto_id' );
 		}
+	}
+
+	/**
+	 * Obtiene el ID del evento vinculado a un producto.
+	 */
+	public static function get_linked_evento_id( $product_id ) {
+		$product_id = absint( $product_id );
+		if ( $product_id <= 0 ) {
+			return 0;
+		}
+
+		$evento_id = absint( get_post_meta( $product_id, '_cm_evento_id', true ) );
+		if ( $evento_id <= 0 || 'casino_evento' !== get_post_type( $evento_id ) ) {
+			return 0;
+		}
+
+		return $evento_id;
+	}
+
+	/**
+	 * Devuelve datos basicos del evento vinculado desde un producto.
+	 */
+	public static function get_linked_evento_data( $product_id ) {
+		$evento_id = self::get_linked_evento_id( $product_id );
+		if ( $evento_id <= 0 ) {
+			return null;
+		}
+
+		$date_raw   = self::get_evento_date_raw( $evento_id );
+		$date_label = '';
+		$casino     = self::get_evento_casino_label( $evento_id );
+
+		if ( ! empty( $date_raw ) ) {
+			$timestamp = strtotime( (string) $date_raw );
+			if ( false !== $timestamp ) {
+				$date_label = wp_date( 'd/m/Y', $timestamp );
+			}
+		}
+
+		$title_parts = array_filter(
+			array(
+				get_the_title( $evento_id ),
+				$date_label,
+				$casino,
+			),
+			'strval'
+		);
+
+		return array(
+			'id'         => $evento_id,
+			'title'      => get_the_title( $evento_id ),
+			'full_title' => implode( ' - ', $title_parts ),
+			'permalink'  => get_permalink( $evento_id ),
+			'date'       => $date_raw,
+			'date_label' => $date_label,
+			'casino'     => $casino,
+		);
+	}
+
+	private static function get_evento_date_raw( $evento_id ) {
+		$meta_keys = array( 'evento_fecha_inicio', 'evento_fecha', 'evento_fecha_fin' );
+
+		foreach ( $meta_keys as $meta_key ) {
+			$value = get_post_meta( $evento_id, $meta_key, true );
+			if ( ! empty( $value ) ) {
+				return $value;
+			}
+		}
+
+		return '';
+	}
+
+	private static function get_evento_casino_label( $evento_id ) {
+		$terms = get_the_terms( $evento_id, 'casino_taxonomy_casinos' );
+		if ( empty( $terms ) || is_wp_error( $terms ) ) {
+			return '';
+		}
+
+		$names = array();
+		foreach ( $terms as $term ) {
+			if ( ! empty( $term->name ) ) {
+				$names[] = $term->name;
+			}
+		}
+
+		if ( empty( $names ) ) {
+			return '';
+		}
+
+		return implode( ', ', $names );
 	}
 
 	/**
@@ -75,12 +161,23 @@ class CM_Evento_Save {
 		$limit   = max( 1, absint( $atts['limit'] ) );
 		$columns = max( 1, absint( $atts['columns'] ) );
 		$order   = 'ASC' === strtoupper( (string) $atts['order'] ) ? 'ASC' : 'DESC';
+		$orderby = sanitize_key( (string) $atts['orderby'] );
+		if ( ! in_array( $orderby, array( 'date', 'title', 'menu_order', 'modified', 'ID', 'rand' ), true ) ) {
+			$orderby = 'date';
+		}
+
 		$query_args = array(
 			'post_type'      => 'product',
 			'post_status'    => 'publish',
-				'posts_per_page' => $limit,
-				'orderby'        => $orderby,
-				'order'          => $order,
+			'posts_per_page' => $limit,
+			'orderby'        => $orderby,
+			'order'          => $order,
+			'meta_query'     => array(
+				array(
+					'key'     => '_cm_evento_id',
+					'compare' => 'EXISTS',
+				),
+			),
 			'tax_query'      => array(
 				array(
 					'taxonomy' => 'product_type',
@@ -100,7 +197,7 @@ class CM_Evento_Save {
 		echo '<style>
 			.cm-eventos-grid {
 				display: grid;
-				grid-template-columns: repeat(3, minmax(0, 1fr));
+				grid-template-columns: repeat(' . (int) $columns . ', minmax(0, 1fr));
 				gap: 24px;
 			}
 
@@ -138,8 +235,24 @@ class CM_Evento_Save {
 			return;
 		}
 
+		$evento_data = self::get_linked_evento_data( $product_id );
+
 		$permalink  = get_permalink( $product_id );
 		$title      = get_the_title( $product_id );
+		if ( is_array( $evento_data ) ) {
+			$title_parts = array_filter(
+				array(
+					$title,
+					! empty( $evento_data['date_label'] ) ? (string) $evento_data['date_label'] : '',
+					! empty( $evento_data['casino'] ) ? (string) $evento_data['casino'] : '',
+				),
+				'strval'
+			);
+
+			if ( ! empty( $title_parts ) ) {
+				$title = implode( ' - ', $title_parts );
+			}
+		}
 		$price_html = $product->get_price_html();
 		$image_html = has_post_thumbnail( $product_id )
 			? get_the_post_thumbnail( $product_id, 'woocommerce_thumbnail', array( 'class' => 'cm-evento-card__image', 'alt' => esc_attr( $title ) ) )
@@ -158,5 +271,15 @@ class CM_Evento_Save {
 		echo '<button type="submit" class="button product_type_simple add_to_cart_button ajax_add_to_cart Ticket__add" style="width: 100%; margin-bottom: 1em">' . esc_html__( 'Añadir al carrito', 'woocommerce' ) . '</button>';
 		echo '</form>';
 		echo '</div>';
+
+	}
+}
+
+if ( ! function_exists( 'cm_get_producto_evento_data' ) ) {
+	/**
+	 * Helper publico para recuperar datos del evento vinculado desde un producto.
+	 */
+	function cm_get_producto_evento_data( $product_id ) {
+		return CM_Evento_Save::get_linked_evento_data( $product_id );
 	}
 }
