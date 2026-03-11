@@ -97,7 +97,26 @@ class CM_Evento_Save {
 		}
 
 		ob_start();
-		echo '<div class="cm-eventos-grid" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px;">';
+		echo '<style>
+			.cm-eventos-grid {
+				display: grid;
+				grid-template-columns: repeat(3, minmax(0, 1fr));
+				gap: 24px;
+			}
+
+			@media (max-width: 768px) {
+				.cm-eventos-grid {
+					grid-template-columns: repeat(2, minmax(0, 1fr));
+				}
+			}
+
+			@media (max-width: 480px) {
+				.cm-eventos-grid {
+					grid-template-columns: 1fr;
+				}
+			}
+		</style>';
+		echo '<div class="cm-eventos-grid">';
 
 		while ( $query->have_posts() ) {
 			$query->the_post();
@@ -127,16 +146,16 @@ class CM_Evento_Save {
 			: wc_placeholder_img( 'woocommerce_thumbnail', array( 'class' => 'cm-evento-card__image' ) );
 
 		echo '<div class="product type-product cm-evento-card" style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center;">';
-		echo '<a href="' . esc_url( $permalink ) . '" class="woocommerce-LoopProduct-link woocommerce-loop-product__link" style="display: flex; flex-direction: column; align-items: center;">';
+		echo '<a href="' . esc_url( $permalink ) . '" class="woocommerce-LoopProduct-link woocommerce-loop-product__link" style="display: flex; flex-direction: column; align-items: center; width: 70%">';
 		echo $image_html;
 		echo '<h2 class="woocommerce-loop-product__title" style="margin: 0.5rem 0;">' . esc_html( $title ) . '</h2>';
 		if ( ! empty( $price_html ) ) {
 			echo '<span class="price" style="margin-bottom: 1rem;">' . wp_kses_post( $price_html ) . '</span>';
 		}
 		echo '</a>';
-		echo '<form class="cart" method="post" enctype="multipart/form-data" style="width: 100%; margin-top: auto;">';
+		echo '<form class="cart" method="post" enctype="multipart/form-data" style="width: 50%; margin-top: auto;">';
 		echo '<input type="hidden" name="add-to-cart" value="' . esc_attr( $product_id ) . '" />';
-		echo '<button type="submit" class="button product_type_simple add_to_cart_button ajax_add_to_cart Ticket__add" style="width: 100%;">' . esc_html__( 'Añadir al carrito', 'woocommerce' ) . '</button>';
+		echo '<button type="submit" class="button product_type_simple add_to_cart_button ajax_add_to_cart Ticket__add" style="width: 100%; margin-bottom: 1em">' . esc_html__( 'Añadir al carrito', 'woocommerce' ) . '</button>';
 		echo '</form>';
 		echo '</div>';
 	}
