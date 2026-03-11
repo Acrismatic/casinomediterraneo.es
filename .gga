@@ -1,0 +1,7 @@
+# Local commit-hook configuration
+PROVIDER="opencode"
+FILE_PATTERNS="*.go"
+EXCLUDE_PATTERNS="*.ts,*.spec.ts,*.test.ts"
+RULES_FILE="AGENTS.md"
+STRICT_MODE="true"
+TIMEOUT="300"

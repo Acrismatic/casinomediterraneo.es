@@ -1,49 +1,26 @@
-# AGENTS.md
+# AGENTS.md (Root Index)
 
-## Project Overview
-Plugin de Wordpress para extender la funcionalidad de Woocommerce. El plugin añade tipos de producto: 
-1. Tipo "Torneo póker"
-2. Tipo "Evevento"
+Este archivo es un indice de agentes del repositorio.
 
-Cada uno de ellos es igual, con las mismas propiedades que un "Producto Simple Virtual" de Woocommerce, pero se añade un select con búscqueda:
-- Torneo Poker: lista todos los torneo de poker
-- Evento: Lista todos los eventos
+## Como usar este indice
 
-## Project Structure
-Explicación rápida del repositorio.
+- Empieza siempre por este archivo.
+- Despues, aplica el `AGENTS.md` mas cercano al area del codigo que vayas a editar.
+- Regla de prioridad: `mas especifico > mas general`.
 
-- /src → código principal
-- /components → componentes UI
-- /services → lógica de negocio
-- /tests → tests
+## Indice de AGENTS locales
 
-## Code Style
-Convenciones obligatorias.
+- Plugin `cm-ecommerce`:
+	- `#file:src/wp-content/plugins/cm-ecommerce/AGENTS.md`
+	- Ruta: `src/wp-content/plugins/cm-ecommerce/AGENTS.md`
 
-- Lenguaje principal es PHP, Javascript
-- Lenguaje de marcado: HTML
-- Estilos: CSS
-- Convención de nombres: Nombres de variables, clases, funciones, métodos, etc; en inglés y DEBEN ser destrictivas
-- Utilizar lo medada de los posible patrones SOLID
-- Usar PREFERENTEMENTE métodos, hooks, actions, etc de Wordpress y Woocommerce frente a crearlos.
-- Usar la skill `woocommerce-backend-dev` SIEMPRE que vayas a hacer algo relacionado con Woocommerce y productos
+## Convencion para nuevos AGENTS
 
-## Git Workflow
-Normas para commits y PR.
+- Si un modulo necesita reglas propias, crear su `AGENTS.md` en la raiz de ese modulo.
+- Mantener este indice actualizado agregando una nueva entrada por cada `AGENTS.md` creado.
+- No duplicar reglas largas en el root: el detalle vive en cada agente local.
 
-- Commits: conventional commits
+## Alcance del root
 
-## Agent Rules
-Reglas específicas para el agente.
-
-- No modificar archivos de configuración sin permiso
-- No añadir dependencias nuevas sin justificar
-- Mantener funciones pequeñas y modulares
-
-## Boundaries
-Limitaciones claras.
-
-- No modificar `/understrap`
-- No modificar `/understrap-child`
-- No modficar plugins, EXCEPTO `cm-ecommerce`
-- No cambiar APIs públicas
+- Este archivo define navegacion y precedencia.
+- Las practicas tecnicas (PHP 8, WordPress, WooCommerce, arquitectura) deben mantenerse en los AGENTS especificos del modulo.
