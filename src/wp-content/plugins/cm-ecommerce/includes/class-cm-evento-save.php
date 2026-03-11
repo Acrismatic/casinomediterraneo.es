@@ -5,9 +5,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class CM_Evento_Save {
+	private const SHORTCODE_STYLE_HANDLE = 'cm-evento-shortcode';
+
 	public static function init() {
 		add_action( 'woocommerce_process_product_meta', array( __CLASS__, 'save_fields' ) );
 		add_shortcode( 'PRODUCTOS_EVENTO', array( __CLASS__, 'render_productos_evento_shortcode' ) );
+	}
+
+	private static function enqueue_shortcode_styles() {
+		wp_enqueue_style(
+			self::SHORTCODE_STYLE_HANDLE,
+			CM_WC_EXT_URL . 'assets/css/cm-evento-shortcode.css',
+			array(),
+			CM_WC_EXT_VERSION
+		);
 	}
 
 	public static function save_fields( $product_id ) {
@@ -193,27 +204,10 @@ class CM_Evento_Save {
 			return '<p>' . esc_html__( 'No hay productos de tipo evento disponibles.', 'cm-wc-extensions' ) . '</p>';
 		}
 
+		self::enqueue_shortcode_styles();
+
 		ob_start();
-		echo '<style>
-			.cm-eventos-grid {
-				display: grid;
-				grid-template-columns: repeat(' . (int) $columns . ', minmax(0, 1fr));
-				gap: 24px;
-			}
-
-			@media (max-width: 768px) {
-				.cm-eventos-grid {
-					grid-template-columns: repeat(2, minmax(0, 1fr));
-				}
-			}
-
-			@media (max-width: 480px) {
-				.cm-eventos-grid {
-					grid-template-columns: 1fr;
-				}
-			}
-		</style>';
-		echo '<div class="cm-eventos-grid">';
+		echo '<div class="cm-eventos-grid" style="--cm-eventos-columns:' . (int) $columns . ';">';
 
 		while ( $query->have_posts() ) {
 			$query->the_post();
@@ -258,17 +252,17 @@ class CM_Evento_Save {
 			? get_the_post_thumbnail( $product_id, 'woocommerce_thumbnail', array( 'class' => 'cm-evento-card__image', 'alt' => esc_attr( $title ) ) )
 			: wc_placeholder_img( 'woocommerce_thumbnail', array( 'class' => 'cm-evento-card__image' ) );
 
-		echo '<div class="product type-product cm-evento-card" style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center;">';
-		echo '<a href="' . esc_url( $permalink ) . '" class="woocommerce-LoopProduct-link woocommerce-loop-product__link" style="display: flex; flex-direction: column; align-items: center; width: 70%">';
+		echo '<div class="product type-product cm-evento-card">';
+		echo '<a href="' . esc_url( $permalink ) . '" class="woocommerce-LoopProduct-link woocommerce-loop-product__link cm-evento-card__link">';
 		echo $image_html;
-		echo '<h2 class="woocommerce-loop-product__title" style="margin: 0.5rem 0;">' . esc_html( $title ) . '</h2>';
+		echo '<h2 class="woocommerce-loop-product__title cm-evento-card__title">' . esc_html( $title ) . '</h2>';
 		if ( ! empty( $price_html ) ) {
-			echo '<span class="price" style="margin-bottom: 1rem;">' . wp_kses_post( $price_html ) . '</span>';
+			echo '<span class="price cm-evento-card__price">' . wp_kses_post( $price_html ) . '</span>';
 		}
 		echo '</a>';
-		echo '<form class="cart" method="post" enctype="multipart/form-data" style="width: 50%; margin-top: auto;">';
+		echo '<form class="cart cm-evento-card__form" method="post" enctype="multipart/form-data">';
 		echo '<input type="hidden" name="add-to-cart" value="' . esc_attr( $product_id ) . '" />';
-		echo '<button type="submit" class="button product_type_simple add_to_cart_button ajax_add_to_cart Ticket__add" style="width: 100%; margin-bottom: 1em">' . esc_html__( 'Añadir al carrito', 'woocommerce' ) . '</button>';
+		echo '<button type="submit" class="button product_type_simple add_to_cart_button ajax_add_to_cart Ticket__add cm-evento-card__button">' . esc_html__( 'Añadir al carrito', 'woocommerce' ) . '</button>';
 		echo '</form>';
 		echo '</div>';
 
