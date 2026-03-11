@@ -159,7 +159,6 @@ class CM_Product_Torneo_Query {
 
 		return $results;
 	}
-   
 
 	/**
 	 * Single product helper.

@@ -64,9 +64,6 @@ class CM_Torneo_Save {
 		self::sync_product_featured_image_from_torneo_modalidad( $product_id, $current_torneo_id );
 	}
 
-	/**
-	 * Keep product featured image synchronized with linked torneo modalidad image.
-	 */
 	private static function sync_product_featured_image_from_torneo_modalidad( $product_id, $torneo_id ) {
 		if ( $torneo_id <= 0 || 'casino_poker_torneo' !== get_post_type( $torneo_id ) ) {
 			delete_post_thumbnail( $product_id );

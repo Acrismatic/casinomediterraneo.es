@@ -21,30 +21,20 @@ if ( ! function_exists( 'cm_wc_extensions_is_woocommerce_active' ) ) {
 	}
 }
 
-if ( ! function_exists( 'cm_wc_extensions_bootstrap' ) ) {
-	function cm_wc_extensions_bootstrap() {
-		static $bootstrapped = false;
+add_filter( 'woocommerce_locate_template', 'cm_ecommerce_override_templates', 10, 3 );
 
-		if ( $bootstrapped ) {
-			return;
-		}
+/**
+ * Override WooCommerce templates from this plugin.
+ */
+function cm_ecommerce_override_templates( $template, $template_name, $template_path ) {
+	$plugin_path     = plugin_dir_path( __FILE__ ) . 'templates/';
+	$custom_template = $plugin_path . $template_name;
 
-		require_once CM_WC_EXT_PATH . 'includes/class-cm-product-types.php';
-		require_once CM_WC_EXT_PATH . 'includes/class-cm-torneo-fields.php';
-		require_once CM_WC_EXT_PATH . 'includes/class-cm-torneo-ajax.php';
-		require_once CM_WC_EXT_PATH . 'includes/class-cm-torneo-save.php';
-		require_once CM_WC_EXT_PATH . 'includes/class-cm-product-torneo-query.php';
-		require_once CM_WC_EXT_PATH . 'includes/class-cm-shortcode-productos.php';
-
-		CM_Product_Types::init();
-		CM_Torneo_Fields::init();
-		CM_Torneo_Ajax::init();
-		CM_Torneo_Save::init();
-		CM_Product_Torneo_Query::init();
-		CM_Shortcode_Productos::init();
-
-		$bootstrapped = true;
+	if ( file_exists( $custom_template ) ) {
+		return $custom_template;
 	}
+
+	return $template;
 }
 
 add_action(
@@ -67,11 +57,13 @@ add_action(
 			return;
 		}
 
+		require_once CM_WC_EXT_PATH . 'includes/Bootstrap/class-cm-plugin-bootstrap.php';
+
 		if ( did_action( 'woocommerce_loaded' ) ) {
-			cm_wc_extensions_bootstrap();
+			CM_Plugin_Bootstrap::init();
 			return;
 		}
 
-		add_action( 'woocommerce_loaded', 'cm_wc_extensions_bootstrap', 20 );
+		add_action( 'woocommerce_loaded', array( 'CM_Plugin_Bootstrap', 'init' ), 20 );
 	}
 );

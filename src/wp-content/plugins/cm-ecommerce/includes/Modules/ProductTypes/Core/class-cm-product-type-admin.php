@@ -4,10 +4,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class CM_Product_Types {
+class CM_Product_Type_Admin {
+
 	public static function init() {
 		add_filter( 'product_type_selector', array( __CLASS__, 'add_product_types' ) );
-		add_filter( 'woocommerce_product_class', array( __CLASS__, 'map_product_classes' ), 10, 2 );
 		add_filter( 'woocommerce_product_data_tabs', array( __CLASS__, 'register_torneo_info_tab' ) );
 		add_filter( 'woocommerce_product_data_tabs', array( __CLASS__, 'extend_simple_tabs_for_torneo' ), 20 );
 		add_filter( 'product_type_options', array( __CLASS__, 'extend_simple_options_for_torneo' ) );
@@ -19,18 +19,6 @@ class CM_Product_Types {
 		$types['evento']       = __( 'Evento', 'cm-wc-extensions' );
 
 		return $types;
-	}
-
-	public static function map_product_classes( $class_name, $product_type ) {
-		if ( 'torneo-poker' === $product_type ) {
-			return 'WC_Product_Torneo_Poker';
-		}
-
-		if ( 'evento' === $product_type ) {
-			return 'WC_Product_Evento';
-		}
-
-		return $class_name;
 	}
 
 	public static function register_torneo_info_tab( $tabs ) {
@@ -46,13 +34,32 @@ class CM_Product_Types {
 
 	public static function extend_simple_tabs_for_torneo( $tabs ) {
 		foreach ( $tabs as $key => $tab ) {
-			if ( empty( $tab['class'] ) || ! is_array( $tab['class'] ) ) {
-				continue;
+			$classes = array();
+
+			if ( ! empty( $tab['class'] ) ) {
+				if ( is_array( $tab['class'] ) ) {
+					$classes = $tab['class'];
+				} elseif ( is_string( $tab['class'] ) ) {
+					$classes = preg_split( '/\s+/', trim( $tab['class'] ) );
+				}
 			}
 
-			if ( in_array( 'show_if_simple', $tab['class'], true ) && ! in_array( 'show_if_torneo-poker', $tab['class'], true ) ) {
-				$tabs[ $key ]['class'][] = 'show_if_torneo-poker';
+			$classes = array_filter( (array) $classes );
+
+			if ( 'general' === $key && ! in_array( 'show_if_simple', $classes, true ) ) {
+				$classes[] = 'show_if_simple';
 			}
+
+			if ( in_array( 'show_if_simple', $classes, true ) ) {
+				foreach ( CM_Product_Types::TYPES as $custom_type ) {
+					$visibility_class = 'show_if_' . $custom_type;
+					if ( ! in_array( $visibility_class, $classes, true ) ) {
+						$classes[] = $visibility_class;
+					}
+				}
+			}
+
+			$tabs[ $key ]['class'] = array_values( array_unique( $classes ) );
 		}
 
 		return $tabs;
@@ -64,8 +71,15 @@ class CM_Product_Types {
 				continue;
 			}
 
-			if ( false !== strpos( $option['wrapper_class'], 'show_if_simple' ) && false === strpos( $option['wrapper_class'], 'show_if_torneo-poker' ) ) {
-				$options[ $key ]['wrapper_class'] .= ' show_if_torneo-poker';
+			if ( false === strpos( $option['wrapper_class'], 'show_if_simple' ) ) {
+				continue;
+			}
+
+			foreach ( CM_Product_Types::TYPES as $custom_type ) {
+				$visibility_class = 'show_if_' . $custom_type;
+				if ( false === strpos( $option['wrapper_class'], $visibility_class ) ) {
+					$options[ $key ]['wrapper_class'] .= ' ' . $visibility_class;
+				}
 			}
 		}
 
@@ -94,13 +108,10 @@ class CM_Product_Types {
 			return;
 		}
 
-		wp_enqueue_script(
-			'cm-wc-product-type',
-			CM_WC_EXT_URL . 'assets/js/cm-product-type.js',
-			array( 'jquery', 'wc-enhanced-select' ),
-			CM_WC_EXT_VERSION,
-			true
-		);
+		$enqueued = CM_Asset_Enqueuer::enqueue( 'cm-wc-product-type' );
+		if ( ! $enqueued ) {
+			return;
+		}
 
 		wp_localize_script(
 			'cm-wc-product-type',
@@ -111,17 +122,5 @@ class CM_Product_Types {
 				'nonce'   => wp_create_nonce( 'cm_search_torneos' ),
 			)
 		);
-	}
-}
-
-class WC_Product_Torneo_Poker extends WC_Product_Simple {
-	public function get_type() {
-		return 'torneo-poker';
-	}
-}
-
-class WC_Product_Evento extends WC_Product_Simple {
-	public function get_type() {
-		return 'evento';
 	}
 }

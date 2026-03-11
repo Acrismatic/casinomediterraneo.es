@@ -5,26 +5,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * [PRODUCTOS] shortcode.
- *
- * Usage:
- *   [PRODUCTOS tipo="torneo"]  — torneo-poker products + linked torneo data.
- *   [PRODUCTOS tipo="evento"]  — evento products + linked evento data.
- *   [PRODUCTOS]                — all other WC products (excludes torneo-poker & evento).
- *   [PRODUCTOS limit="8"]      — optional: override products per page.
- *   [PRODUCTOS orderby="date"] — optional: override sort (default: date).
+ * Shortcodes [PRODUCTOS] and [productos_torneo].
  */
 class CM_Shortcode_Productos {
 
 	const CUSTOM_TYPES = array( 'torneo-poker', 'evento' );
 
 	const TIPO_MAP = array(
-		'torneo' => 'torneo-poker',
 		'evento' => 'evento',
 	);
 
 	public static function init() {
 		add_shortcode( 'PRODUCTOS', array( __CLASS__, 'render' ) );
+		add_shortcode( 'productos_torneo', array( __CLASS__, 'render_productos_torneo' ) );
 	}
 
 	public static function enqueue_assets() {
@@ -33,11 +26,33 @@ class CM_Shortcode_Productos {
 		}
 
 		wp_enqueue_script( 'wc-add-to-cart' );
-		wp_enqueue_style(
-			'cm-shortcode-productos',
-			CM_WC_EXT_URL . 'assets/css/cm-shortcode-productos.css',
-			array(),
-			CM_WC_EXT_VERSION
+		CM_Asset_Enqueuer::enqueue( 'cm-shortcode-productos' );
+	}
+
+	public static function enqueue_torneo_assets() {
+		if ( is_admin() ) {
+			return;
+		}
+
+		wp_enqueue_script( 'wc-add-to-cart' );
+		CM_Asset_Enqueuer::enqueue( 'cm-shortcode-productos' );
+		CM_Asset_Enqueuer::enqueue( 'cm-shortcode-productos-torneo-css' );
+		CM_Asset_Enqueuer::enqueue( 'cm-shortcode-productos-torneo-js' );
+
+		wp_localize_script(
+			'cm-shortcode-productos-torneo-js',
+			'cmProductosTorneo',
+			array(
+				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+				'action'    => CM_Shortcode_Productos_Ajax::ACTION,
+				'nonce'     => wp_create_nonce( CM_Shortcode_Productos_Ajax::NONCE_ACTION ),
+				'batchSize' => CM_Shortcode_Productos_Query::LOAD_MORE_BATCH,
+				'messages'  => array(
+					'loading' => __( 'Cargando torneos...', 'cm-wc-extensions' ),
+					'error'   => __( 'No pudimos cargar mas torneos. Intenta nuevamente.', 'cm-wc-extensions' ),
+					'end'     => __( 'No hay mas torneos.', 'cm-wc-extensions' ),
+				),
+			)
 		);
 	}
 
@@ -66,6 +81,12 @@ class CM_Shortcode_Productos {
 			$limit = 12;
 		}
 
+		if ( 'torneo' === $tipo || 'torneo-poker' === $tipo ) {
+			return '<p class="cm-productos--empty">'
+				. esc_html__( 'El flujo de torneos ahora usa [productos_torneo].', 'cm-wc-extensions' )
+				. '</p>';
+		}
+
 		$query_args = array(
 			'status'  => 'publish',
 			'limit'   => $limit,
@@ -82,10 +103,6 @@ class CM_Shortcode_Productos {
 			$query_args['cm_exclude_types'] = self::CUSTOM_TYPES;
 		}
 
-		if ( 'torneo-poker' === $resolved_type ) {
-			return self::render_torneo_products( $query_args );
-		}
-
 		if ( 'evento' === $resolved_type ) {
 			return self::render_evento_products( $query_args );
 		}
@@ -93,97 +110,26 @@ class CM_Shortcode_Productos {
 		return self::render_default_products( $query_args );
 	}
 
-	// ------------------------------------------------------------------
-	// Renderers
-	// ------------------------------------------------------------------
+	public static function render_productos_torneo( $atts ) {
+		self::enqueue_torneo_assets();
 
-	private static function render_torneo_products( array $query_args ) {
-		$query_args['cm_has_torneo'] = true;
+		$atts = shortcode_atts(
+			array(
+				'cantidad' => CM_Shortcode_Productos_Query::DEFAULT_INITIAL_LIMIT,
+			),
+			$atts,
+			'productos_torneo'
+		);
 
-		$items = CM_Product_Torneo_Query::get_products_with_torneo_data( $query_args );
+		$result = CM_Shortcode_Productos_Query::get_initial_payload( $atts['cantidad'] );
 
-		if ( empty( $items ) ) {
+		if ( is_wp_error( $result ) ) {
 			return '<p class="cm-productos--empty">'
-				. esc_html__( 'No hay torneos disponibles.', 'cm-wc-extensions' )
+				. esc_html__( 'No pudimos obtener torneos por el momento.', 'cm-wc-extensions' )
 				. '</p>';
 		}
 
-		ob_start();
-		?>
-		<div class="cm-productos cm-productos--torneo">
-		<?php foreach ( $items as $item ) :
-			$product   = $item['product'];
-			$torneo    = $item['torneo'];
-			$modalidad = $item['modalidad'];
-			$product_link = get_permalink( $product['id'] );
-			$has_bounty   = $torneo && ! empty( $torneo['bounty'] );
-
-			$fecha_hora = '';
-			if ( $torneo && ! empty( $torneo['fecha'] ) ) {
-				$fecha_hora = (string) $torneo['fecha'];
-				if ( ! empty( $torneo['hora'] ) ) {
-					$fecha_hora .= ' · ' . $torneo['hora'];
-				}
-			}
-			?>
-			<article class="cm-productos__item cm-productos__item--torneo" data-product-id="<?php echo esc_attr( $product['id'] ); ?>">
-				<a class="cm-productos__image-link" href="<?php echo esc_url( $product_link ); ?>">
-					<?php echo self::get_product_thumbnail( $product['id'] ); ?>
-				</a>
-
-				<?php if ( '' !== $fecha_hora ) : ?>
-					<p class="cm-productos__date"><?php echo esc_html( $fecha_hora ); ?></p>
-				<?php endif; ?>
-
-				<?php if ( $modalidad && ! empty( $modalidad['name'] ) ) : ?>
-					<p class="cm-productos__modalidad"
-						<?php if ( ! empty( $modalidad['color'] ) ) : ?>
-							style="border-color: <?php echo esc_attr( $modalidad['color'] ); ?>; color: <?php echo esc_attr( $modalidad['color'] ); ?>;"
-						<?php endif; ?>
-					>
-						<?php echo esc_html( $modalidad['name'] ); ?>
-					</p>
-				<?php endif; ?>
-
-				<h3 class="cm-productos__name">
-					<a href="<?php echo esc_url( $product_link ); ?>"><?php echo esc_html( $product['name'] ); ?></a>
-				</h3>
-
-				<div class="cm-productos__price-row">
-					<p class="cm-productos__price"><?php echo wp_kses_post( $product['price_html'] ); ?></p>
-					<?php if ( $has_bounty ) : ?>
-						<span class="cm-productos__bounty-inline">
-							<?php
-							printf(
-								esc_html__( 'Bounty: %s€', 'cm-wc-extensions' ),
-								esc_html( $torneo['bounty'] )
-							);
-							?>
-						</span>
-					<?php endif; ?>
-				</div>
-
-				<?php if ( $has_bounty ) : ?>
-					<div class="cm-productos__bounty-notice">
-						<p class="cm-productos__bounty-notice-text">
-							<?php
-							printf(
-								esc_html__( 'La cantidad correspondiente al Boundy ( %s€ ) se deberá abonarn en caja.', 'cm-wc-extensions' ),
-								esc_html( $torneo['bounty'] )
-							);
-							?>
-						</p>
-					</div>
-				<?php endif; ?>
-
-				<div class="cm-productos__actions">
-					<?php echo self::get_add_to_cart_button( $product['id'] ); ?>
-				</div>
-			</article>
-		<?php endforeach; ?>
-		</div>
-		<?php
-		return ob_get_clean();
+		return CM_Shortcode_Productos_Renderer::render_shortcode_container( $result );
 	}
 
 	private static function render_evento_products( array $query_args ) {
@@ -259,11 +205,7 @@ class CM_Shortcode_Productos {
 		return ob_get_clean();
 	}
 
-	// ------------------------------------------------------------------
-	// Helpers
-	// ------------------------------------------------------------------
-
-	private static function get_add_to_cart_button( $product_id ) {
+	public static function get_add_to_cart_button( $product_id ) {
 		$product = wc_get_product( $product_id );
 
 		if ( ! $product || ! $product->is_purchasable() || ! $product->is_in_stock() ) {
@@ -279,11 +221,13 @@ class CM_Shortcode_Productos {
 				esc_attr( 'button cm-productos__cart-btn add_to_cart_button ajax_add_to_cart' ),
 				esc_attr( $product_id ),
 				esc_attr( $product->get_sku() ),
-				esc_attr( sprintf(
-					/* translators: %s: Product name. */
-					__( 'Añadir &ldquo;%s&rdquo; al carrito', 'cm-wc-extensions' ),
-					$product->get_name()
-				) ),
+				esc_attr(
+					sprintf(
+						/* translators: %s: Product name. */
+						__( 'Añadir &ldquo;%s&rdquo; al carrito', 'cm-wc-extensions' ),
+						$product->get_name()
+					)
+				),
 				esc_html__( 'Añadir al carrito', 'cm-wc-extensions' )
 			);
 		}
@@ -291,25 +235,34 @@ class CM_Shortcode_Productos {
 		return sprintf(
 			'<a href="%s" class="button cm-productos__cart-btn" aria-label="%s">%s</a>',
 			esc_url( $product->add_to_cart_url() ),
-			esc_attr( sprintf(
-				/* translators: %s: Product name. */
-				__( 'Ver opciones de &ldquo;%s&rdquo;', 'cm-wc-extensions' ),
-				$product->get_name()
-			) ),
+			esc_attr(
+				sprintf(
+					/* translators: %s: Product name. */
+					__( 'Ver opciones de &ldquo;%s&rdquo;', 'cm-wc-extensions' ),
+					$product->get_name()
+				)
+			),
 			esc_html__( 'Ver opciones', 'cm-wc-extensions' )
 		);
 	}
 
-	private static function get_product_thumbnail( $product_id ) {
-		$image = get_the_post_thumbnail( $product_id, 'woocommerce_thumbnail', array(
-			'class'   => 'cm-productos__image',
-			'loading' => 'lazy',
-		) );
+	public static function get_product_thumbnail( $product_id ) {
+		$image = get_the_post_thumbnail(
+			$product_id,
+			'woocommerce_thumbnail',
+			array(
+				'class'   => 'cm-productos__image',
+				'loading' => 'lazy',
+			)
+		);
 
 		if ( empty( $image ) ) {
-			$image = wc_placeholder_img( 'woocommerce_thumbnail', array(
-				'class' => 'cm-productos__image',
-			) );
+			$image = wc_placeholder_img(
+				'woocommerce_thumbnail',
+				array(
+					'class' => 'cm-productos__image',
+				)
+			);
 		}
 
 		return $image;

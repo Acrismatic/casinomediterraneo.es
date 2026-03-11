@@ -1,0 +1,49 @@
+.cm-productos-torneo {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.cm-productos-torneo__footer {
+  display: grid;
+  gap: 0.55rem;
+  justify-items: center;
+}
+
+.cm-productos-torneo__load-more {
+  border: 1px solid rgba(197, 182, 130, 0.45);
+  background: #0f1f2a;
+  color: #f3ecda;
+  border-radius: 10px;
+  padding: 0.7rem 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.cm-productos-torneo__load-more:hover,
+.cm-productos-torneo__load-more:focus-visible {
+  background: #c5b682;
+  color: #0d1821;
+}
+
+.cm-productos-torneo__load-more[disabled],
+.cm-productos-torneo__load-more.is-loading {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.cm-productos-torneo__load-more.is-hidden {
+  display: none;
+}
+
+.cm-productos-torneo__feedback {
+  margin: 0;
+  min-height: 1.25rem;
+  color: #c7d3d6;
+  font-size: 0.86rem;
+}
+
+.cm-productos-torneo__feedback.is-error {
+  color: #f48b9f;
+}
