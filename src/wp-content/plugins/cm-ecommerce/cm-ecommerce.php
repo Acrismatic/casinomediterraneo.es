@@ -31,13 +31,19 @@ if ( ! function_exists( 'cm_wc_extensions_bootstrap' ) ) {
 
 		require_once CM_WC_EXT_PATH . 'includes/class-cm-product-types.php';
 		require_once CM_WC_EXT_PATH . 'includes/class-cm-torneo-fields.php';
+		require_once CM_WC_EXT_PATH . 'includes/class-cm-evento-fields.php';
 		require_once CM_WC_EXT_PATH . 'includes/class-cm-torneo-ajax.php';
+		require_once CM_WC_EXT_PATH . 'includes/class-cm-evento-ajax.php';
 		require_once CM_WC_EXT_PATH . 'includes/class-cm-torneo-save.php';
+		require_once CM_WC_EXT_PATH . 'includes/class-cm-evento-save.php';
 
 		CM_Product_Types::init();
 		CM_Torneo_Fields::init();
+		CM_Evento_Fields::init();
 		CM_Torneo_Ajax::init();
+		CM_Evento_Ajax::init();
 		CM_Torneo_Save::init();
+		CM_Evento_Save::init();
 
 		$bootstrapped = true;
 	}
