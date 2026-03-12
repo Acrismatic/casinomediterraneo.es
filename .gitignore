@@ -15,7 +15,7 @@ src/wp-content/uploads/*
 
 src/wp-content/plugins/*
 !src/wp-content/plugins/cm-ecommerce
-
+!src/wp-content/plugins/cm-products
 
 src/wp-content/themes/*
 src/wp-content/themes/understrap
