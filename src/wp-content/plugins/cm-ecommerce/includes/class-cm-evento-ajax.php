@@ -46,12 +46,29 @@ class CM_Evento_Ajax
 		$results = array();
 		foreach ($query->posts as $evento_id) {
 			$label = get_the_title($evento_id);
-			$date  = get_post_meta($evento_id, 'evento_fecha', true);
+			$date  = get_post_meta($evento_id, 'evento_fecha_inicio', true);
+			if (empty($date)) {
+				$date = get_post_meta($evento_id, 'evento_fecha', true);
+			}
 
 			if (! empty($date)) {
 				$timestamp = strtotime((string) $date);
 				if (false !== $timestamp) {
 					$label .= ' - ' . wp_date('d/m/Y', $timestamp);
+				}
+			}
+
+			$terms = get_the_terms($evento_id, 'casino_taxonomy_casinos');
+			if (! empty($terms) && ! is_wp_error($terms)) {
+				$names = array();
+				foreach ($terms as $term) {
+					if (! empty($term->name)) {
+						$names[] = $term->name;
+					}
+				}
+
+				if (! empty($names)) {
+					$label .= ' - ' . implode(', ', $names);
 				}
 			}
 
@@ -69,8 +86,6 @@ class CM_Evento_Ajax
 		));
 	}
 }
-
-CM_Evento_Ajax::init();
 
 function cm_enqueue_admin_evento_script($hook)
 {

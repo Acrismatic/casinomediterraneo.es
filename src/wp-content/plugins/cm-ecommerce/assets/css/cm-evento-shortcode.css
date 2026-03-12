@@ -1,0 +1,50 @@
+.cm-eventos-grid {
+	display: grid;
+	grid-template-columns: repeat(var(--cm-eventos-columns, 3), minmax(0, 1fr));
+	gap: 24px;
+}
+
+.cm-evento-card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
+	text-align: center;
+}
+
+.cm-evento-card__link {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 70%;
+}
+
+.cm-evento-card__title {
+	margin: 0.5rem 0;
+}
+
+.cm-evento-card__price {
+	margin-bottom: 1rem;
+}
+
+.cm-evento-card__form {
+	width: 50%;
+	margin-top: auto;
+}
+
+.cm-evento-card__button {
+	width: 100%;
+	margin-bottom: 1em;
+}
+
+@media (max-width: 768px) {
+	.cm-eventos-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 480px) {
+	.cm-eventos-grid {
+		grid-template-columns: 1fr;
+	}
+}
