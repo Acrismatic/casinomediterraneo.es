@@ -88,7 +88,7 @@ class CM_Evento_Save {
 
 		$date_raw   = self::get_evento_date_raw( $evento_id );
 		$date_label = '';
-		$casino     = self::get_evento_casino_label( $evento_id );
+		$casino     = self::get_evento_casino_label( $product_id );
 
 		if ( ! empty( $date_raw ) ) {
 			$timestamp = strtotime( (string) $date_raw );
