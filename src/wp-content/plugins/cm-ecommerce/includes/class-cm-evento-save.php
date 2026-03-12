@@ -86,16 +86,10 @@ class CM_Evento_Save {
 			return null;
 		}
 
-		$date_raw   = self::get_evento_date_raw( $evento_id );
-		$date_label = '';
+		$date_range = self::get_evento_date_range_raw( $evento_id );
+		$date_raw   = $date_range['start'];
+		$date_label = self::format_evento_date_label( $date_range['start'], $date_range['end'] );
 		$casino     = self::get_evento_casino_label( $product_id );
-
-		if ( ! empty( $date_raw ) ) {
-			$timestamp = strtotime( (string) $date_raw );
-			if ( false !== $timestamp ) {
-				$date_label = wp_date( 'j \d\e F', $timestamp );
-			}
-		}
 
 		$title_parts = array_filter(
 			array(
@@ -112,19 +106,40 @@ class CM_Evento_Save {
 			'full_title' => implode( ' - ', $title_parts ),
 			'permalink'  => get_permalink( $evento_id ),
 			'date'       => $date_raw,
+			'date_end'   => $date_range['end'],
 			'date_label' => $date_label,
 			'casino'     => $casino,
 		);
 	}
 
-	private static function get_evento_date_raw( $evento_id ) {
-		$meta_keys = array( 'evento_fecha_inicio', 'evento_fecha', 'evento_fecha_fin' );
+	private static function get_evento_date_range_raw( $evento_id ) {
+		$start = get_post_meta( $evento_id, 'evento_fecha_inicio', true );
+		if ( empty( $start ) ) {
+			$start = get_post_meta( $evento_id, 'evento_fecha', true );
+		}
 
-		foreach ( $meta_keys as $meta_key ) {
-			$value = get_post_meta( $evento_id, $meta_key, true );
-			if ( ! empty( $value ) ) {
-				return $value;
-			}
+		$end = get_post_meta( $evento_id, 'evento_fecha_fin', true );
+
+		return array(
+			'start' => ! empty( $start ) ? (string) $start : '',
+			'end'   => ! empty( $end ) ? (string) $end : '',
+		);
+	}
+
+	private static function format_evento_date_label( $date_start_raw, $date_end_raw ) {
+		$start_timestamp = ! empty( $date_start_raw ) ? strtotime( (string) $date_start_raw ) : false;
+		$end_timestamp   = ! empty( $date_end_raw ) ? strtotime( (string) $date_end_raw ) : false;
+
+		if ( false !== $start_timestamp && false !== $end_timestamp && $end_timestamp !== $start_timestamp ) {
+			return 'del ' . wp_date( 'j \\d\\e F', $start_timestamp ) . ' hasta el ' . wp_date( 'j \\d\\e F', $end_timestamp );
+		}
+
+		if ( false !== $start_timestamp ) {
+			return wp_date( 'j \\d\\e F', $start_timestamp );
+		}
+
+		if ( false !== $end_timestamp ) {
+			return wp_date( 'j \\d\\e F', $end_timestamp );
 		}
 
 		return '';
