@@ -93,7 +93,7 @@ class CM_Evento_Save {
 		if ( ! empty( $date_raw ) ) {
 			$timestamp = strtotime( (string) $date_raw );
 			if ( false !== $timestamp ) {
-				$date_label = wp_date( 'd/m/Y', $timestamp );
+				$date_label = wp_date( 'j \d\e F', $timestamp );
 			}
 		}
 
